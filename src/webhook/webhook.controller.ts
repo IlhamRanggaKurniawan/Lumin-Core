@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Body, Controller, Headers, HttpCode, Param, Patch, Post, Req, UnauthorizedException } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
-import { EventsService } from 'src/events/events.service';
 
 @Controller("/api")
 export class WebhookController {
@@ -11,31 +9,18 @@ export class WebhookController {
 
     constructor(
         private readonly webhookService: WebhookService,
-        private readonly eventsService: EventsService,
     ) { }
 
     @Post("/webhook")
     @HttpCode(200)
-    webhook(@Body() payload: any, @Headers('x-alchemy-signature') signature: string, @Req() req: any) {
-
+    async webhook(@Body() payload: any, @Headers('x-alchemy-signature') signature: string, @Req() req: any) {
         const verified = this.webhookService.verifySignature(req.rawBody, signature, this.signingKey)
 
         if (!verified) {
             throw new UnauthorizedException("Invalid Signature")
         }
 
-        const data = this.webhookService.processAlchemyEvent(payload);
-
-        const transactionData = {
-            fromAddress: data.event.activity[0].fromAddress,
-            toAddress: data.event.activity[0].toAddress,
-            asset: data.event.activity[0].asset,
-            value: data.event.activity[0].value,
-            hash: data.event.activity[0].hash,
-            timestamp: data.createdAt,
-        }
-
-        this.eventsService.emitEvent(transactionData)
+        await this.webhookService.webhook(payload)
     }
 
     @Patch("/webhook/:address")
