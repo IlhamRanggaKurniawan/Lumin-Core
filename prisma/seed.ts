@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 async function main() {
-  await prisma.token.upsert({
+  await prisma.tokenMetadata.upsert({
     where: {
       address_chainId: {
         address: "0x0000000000000000000000000000000000000000",

@@ -13,7 +13,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Token {
+model User {
+  address String         @id
+  token   TokenBalance[]
+}
+
+model TokenBalance {
+  userAddress  String
+  tokenAddress String
+  chainId      Int
+  balance      Decimal
+
+  Token TokenMetadata @relation(fields: [tokenAddress, chainId], references: [address, chainId])
+  User  User          @relation(fields: [userAddress], references: [address])
+
+  @@id([userAddress, tokenAddress, chainId])
+}
+
+model TokenMetadata {
   address  String
   chainId  Int
   name     String
@@ -21,21 +38,21 @@ model Token {
   symbol   String
   imageUrl String?
 
-  transactions Transaction[]
+  TokenBalance TokenBalance[]
+  Transactions Transaction[]
 
   @@id([address, chainId])
 }
 
 model Transaction {
-  hash      String
-  chainId   Int
-  from      String
-  to        String
-  value     Float
-  timestamp DateTime
+  hash         String
+  chainId      Int
+  from         String
+  to           String
+  value        Decimal
+  timestamp    DateTime
+  tokenAddress String
 
-  tokenAddress String?
-  Token        Token?  @relation(fields: [tokenAddress, chainId], references: [address, chainId])
-
+  TokenMetadata TokenMetadata? @relation(fields: [tokenAddress, chainId], references: [address, chainId])
   @@id([hash, chainId])
 }
